@@ -181,20 +181,10 @@ export default class App extends Component {
       title: '',
       canGoBack: false,
       canGoForward: false,
-      // clampedScroll: Animated.diffClamp(
-      //   Animated.add(
-      //     scrollAnim.interpolate({
-      //       inputRange: [0, 1],
-      //       outputRange: [0, 1],
-      //       extrapolateLeft: 'clamp',
-      //     }),
-      //     offsetAnim,
-      //   ),
-      //   0,
-      //   NAVBAR_HEIGHT - STATUS_BAR_HEIGHT,
-      // ),
     };
     this.webview_ref = React.createRef();
+    this.tabHeight = new Animated.Value(0);
+    this.navHeight = new Animated.Value(0);
   }
 
   // _clampedScrollValue = 0;
@@ -285,6 +275,33 @@ export default class App extends Component {
   };
 
   _onScroll = dist => {
+    // const { scrollValue } = this.state;
+    let toValue = TAB_HEIGHT;
+    let _toValue = -NAVBAR_HEIGHT;
+    if(dist < 0 || dist === STATUS_BAR_HEIGHT) {
+      toValue = 0;
+      _toValue = 0;
+    }
+    
+    Animated.spring(
+      this.tabHeight,
+      {
+        toValue,
+        velocity: 2,
+        tension: 2,
+        friction: 8,
+      }
+    ).start();
+
+    Animated.spring(
+      this.navHeight,
+      {
+        toValue: _toValue,
+        velocity: 2,
+        tension: 2,
+        friction: 8,
+      }
+    ).start();
     this.setState({
       scrollValue: dist,
     });
@@ -422,13 +439,14 @@ export default class App extends Component {
           /> */}
           <WebView
             style={{
+              // TDOD: animate this to conform with the statusbar/navbar animation
               marginTop: scrollValue < 0 ? NAVBAR_HEIGHT : STATUS_BAR_HEIGHT,
             }}
             bounces={false}
             javaScriptEnabled={true}
             ref={b => (this._bridge = b)}
             // source={{ html }}
-            source={{ uri: 'https://github.com' }}
+            source={{ uri: 'https://google.com' }}
             injectedJavaScript={run}
             onMessage={event => {
               this._onScroll(event.nativeEvent.data);
@@ -436,15 +454,15 @@ export default class App extends Component {
             ref={this.webview_ref}
             onNavigationStateChange={this._onNavigationStateChange}
           />
-          {(scrollValue < 0 || scrollValue === STATUS_BAR_HEIGHT) && (
             <Animated.View
-              style={[styles.navbar, { transform: [{ translateY: 0 }] }]}>
-              <Animated.View style={[styles.title, { opacity: 1 }]}>
+              style={[styles.navbar, { transform: [{ translateY: this.navHeight }] }]}>
+              <View style={[styles.title, { opacity: 1 }]}>
                 <View style={styles.textInput}>
                   <TextInput
                     onChangeText={this._handleChange}
                     value={this.state.inputValue}
                     autoCorrect={false}
+                    autoCapitalize="none"
                     onBlur={this._hideInput}
                     style={{
                       fontSize: 15,
@@ -453,12 +471,10 @@ export default class App extends Component {
                     placeholder="Search or enter address"
                   />
                 </View>
-              </Animated.View>
+              </View>
             </Animated.View>
-          )}
-          {(scrollValue < 0 || scrollValue === STATUS_BAR_HEIGHT) && (
             <Animated.View
-              style={[styles.tabBar, { transform: [{ translateY: 0 }] }]}>
+              style={[styles.tabBar, {transform: [{translateY: this.tabHeight}]}]}>
               <View
                 style={{
                   display: 'flex',
@@ -480,7 +496,6 @@ export default class App extends Component {
                 })}
               </View>
             </Animated.View>
-          )}
         </View>
       </>
     );
@@ -511,13 +526,6 @@ const styles = StyleSheet.create({
   title: {
     color: '#333333',
   },
-  row: {
-    height: 800,
-    width: null,
-    marginBottom: 1,
-    padding: 16,
-    backgroundColor: 'transparent',
-  },
   rowText: {
     color: 'white',
     fontSize: 18,
@@ -541,9 +549,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    backgroundColor: '#ccc',
-    height: TAB_HEIGHT,
+    backgroundColor: '#f4f4f4',
+    height: isX() ? 80 : 40,
     justifyContent: 'center',
+    borderTopWidth: 0.5,
+    borderTopColor: '#e4e4e4',
     paddingBottom: isX() ? 30 : 0,
   },
 });
