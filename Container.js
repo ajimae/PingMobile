@@ -12,7 +12,6 @@ class App extends Component {
   }
 
   renderCards = ({cl, i}) => {
-    console.log(i, '>>>i')
     return (
       <View key={i}>
         <TouchableOpacity onPress={() => this.removeCard(i)}>
@@ -38,7 +37,6 @@ class App extends Component {
   }
 
   render() {
-    console.log(this.state, '>>>')
     return (
       <View style={{
         flex: 1,
@@ -57,16 +55,6 @@ class App extends Component {
         >
           <Text>Add Card</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          onPress={() => this.addCards(['empty'])}
-          style={{
-            alignItems: 'center',
-            width: 100,
-            borderWidth: 1,
-          }}
-        >
-          <Text>Remove Card</Text>
-        </TouchableOpacity> */}
       </View>
     )
   }
