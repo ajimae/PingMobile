@@ -26,9 +26,6 @@ const STATUS_BAR_HEIGHT = Platform.select({
 
 const TAB_HEIGHT = isX() ? 80 : 40;
 
-// const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
-// const AnimatedWebView = Animated.createAnimatedComponent(WebView);
-
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -38,6 +35,7 @@ export default class App extends Component {
       fixNavBar: false,
       scrollValue: -1,
       title: '',
+      uri: '',
       canGoBack: false,
       canGoForward: false,
     };
@@ -48,6 +46,7 @@ export default class App extends Component {
 
   componentDidMount() {
     this.setState({
+      // uri: html,
       scrollValue: STATUS_BAR_HEIGHT,
     });
   }
@@ -146,6 +145,32 @@ export default class App extends Component {
     });
   };
 
+  _handleGo = () => {
+    let uri = "";
+    let truncatedValue = "";
+    const { inputValue } = this.state;
+    const protocol = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi; 
+    const url = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
+    
+    if (inputValue.match(new RegExp(url))) {
+      if (inputValue.match(new RegExp(protocol))) {
+        uri = inputValue;
+        const regex = /[\/?]/gi;
+        truncatedValue = uri.split(regex)[2];
+      } else {
+        uri = `http://${inputValue}`;
+        const regex = /[\/?]/gi;
+        truncatedValue = uri.split(regex)[2];
+      }
+      
+    } else {
+      uri = `https://www.google.com/search?q=${inputValue}`;
+      const regex = /[\/?]/gi;
+      truncatedValue = uri.split(regex)[2];
+    }
+    this.setState({ uri, inputValue: truncatedValue });
+  }
+
   render() {
     const run = `(function() {
       var callback=function(direction) {
@@ -161,7 +186,8 @@ export default class App extends Component {
         }, true)
     })(window)`;
 
-    const { scrollValue, canGoBack, canGoForward } = this.state;
+    const { scrollValue, canGoBack, canGoForward, uri } = this.state;
+    console.log(uri)
     return (
       <>
         <StatusBar color="#000" animated={true} barStyle="dark-content" />
@@ -175,7 +201,7 @@ export default class App extends Component {
             javaScriptEnabled={true}
             ref={b => (this._bridge = b)}
             // source={{ html }}
-            source={{ uri: 'https://google.com' }}
+            source={uri ? { uri } : { html }}
             injectedJavaScript={run}
             onMessage={event => {
               this._onScroll(event.nativeEvent.data);
@@ -198,11 +224,13 @@ export default class App extends Component {
                   autoCorrect={false}
                   autoCapitalize="none"
                   returnKeyType="go"
+                  selectTextOnFocus={true}
                   onBlur={this._hideInput}
+                  onSubmitEditing={this._handleGo}
                   // inputAccessoryViewID={'inputAccessoryViewID'}
                   style={{
                     fontSize: 15,
-                    // color: '#42414f',
+                    color: '#42414f',
                   }}
                   placeholder="Search or enter address"
                 />
@@ -297,8 +325,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   icons: {
-    height: isX() ? 20 : 18,
-    width: isX() ? 20 : 18,
+    height: isX() ? 22 : 20,
+    width: isX() ? 22 : 20,
   },
   textInput: {
     paddingVertical: 8,
