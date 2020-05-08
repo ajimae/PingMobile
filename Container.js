@@ -29,7 +29,6 @@ class App extends Component {
   }
 
   removeCard = (i) => {
-    console.log(i, '<><>i><><>')
     this.setState(prevState => ({
       ...prevState,
       cardList: [...this.state.cardList.filter(cl => cl.id !== i)]

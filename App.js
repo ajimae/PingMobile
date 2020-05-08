@@ -9,6 +9,7 @@ import {
   TextInput,
   Dimensions,
   StatusBar,
+  ActionSheetIOS,
   TouchableOpacity,
 } from 'react-native';
 
@@ -16,7 +17,7 @@ import { WebView } from 'react-native-webview';
 
 import { assets, icons } from './src/assets';
 import { isX } from './src/utils/is-iphone-x';
-import { html } from './fixtures';
+import { images } from './fixtures';
 
 const NAVBAR_HEIGHT = isX() ? 100 : 64;
 const STATUS_BAR_HEIGHT = Platform.select({
@@ -25,6 +26,7 @@ const STATUS_BAR_HEIGHT = Platform.select({
 });
 
 const TAB_HEIGHT = isX() ? 80 : 40;
+const URL = 'http://127.0.0.1:5500/index.html';
 
 export default class App extends Component {
   constructor(props) {
@@ -36,6 +38,9 @@ export default class App extends Component {
       scrollValue: -1,
       title: '',
       uri: '',
+      isError: false,
+      homeImageObject: {},
+      webViewKey: 1,
       canGoBack: false,
       canGoForward: false,
     };
@@ -46,7 +51,7 @@ export default class App extends Component {
 
   componentDidMount() {
     this.setState({
-      // uri: html,
+      uri: URL,
       scrollValue: STATUS_BAR_HEIGHT,
     });
   }
@@ -130,28 +135,31 @@ export default class App extends Component {
 
   _handleBackAction = () => {
     const { canGoBack } = this.state;
-    if (canGoBack) {
+    if (canGoBack)
       return this.webview_ref.current.goBack();
-    }
     return false;
   };
 
-  _onNavigationStateChange = ({ canGoBack, canGoForward, title }) => {
+  _onNavigationStateChange = ({ canGoBack, canGoForward, title, url: uri }) => {
+    const homeImageObject = images[title] || '';
     this.setState({
+      uri,
       title,
       canGoBack,
       canGoForward,
+      homeImageObject,
       scrollValue: -1,
     });
   };
 
   _handleGo = () => {
-    let uri = "";
-    let truncatedValue = "";
     const { inputValue } = this.state;
-    const protocol = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi; 
+    if (inputValue.trim() == '') return;
+    let uri = '';
+    let truncatedValue = '';
+    const protocol = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
     const url = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
-    
+
     if (inputValue.match(new RegExp(url))) {
       if (inputValue.match(new RegExp(protocol))) {
         uri = inputValue;
@@ -162,14 +170,82 @@ export default class App extends Component {
         const regex = /[\/?]/gi;
         truncatedValue = uri.split(regex)[2];
       }
-      
     } else {
+      // TODO: add other search engines here
       uri = `https://www.google.com/search?q=${inputValue}`;
       const regex = /[\/?]/gi;
       truncatedValue = uri.split(regex)[2];
     }
     this.setState({ uri, inputValue: truncatedValue });
+  };
+
+  _visitPhotoArtist = props => {
+    const { link, author: title } = props;
+    return ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ['Close', `View on ${'device'}`],
+        destructiveButtonIndex: 2,
+        cancelButtonIndex: 0,
+        title,
+      },
+      buttonIndex => {
+        if (buttonIndex === 0) {
+          // cancel action
+        } else if (buttonIndex === 1) {
+          this.setState({
+            uri: link,
+          });
+          // this._onNavigationStateChange({canGoBack: true});
+        }
+      },
+    );
+  };
+
+  _handleError = error => {
+    this.setState({
+      isError: true
+    });
   }
+
+  _renderArtistButton = props => {
+    const { homeImageObject } = this.state;
+    if (!homeImageObject.author) return;
+    return (
+      <TouchableOpacity
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          position: 'absolute',
+          borderWidth: 1,
+          top: isX() ? 675 : 490,
+        }}
+        onPress={() => this._visitPhotoArtist(homeImageObject)}>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            position: 'absolute',
+            top: 100,
+            marginLeft: 20,
+            paddingHorizontal: 10,
+            height: 22,
+            borderRadius: 5,
+            backgroundColor: 'rgba(70, 70, 70, 0.60)',
+          }}>
+          <Text
+            style={{
+              color: '#fff',
+              fontSize: 12,
+            }}>
+            Photo by {homeImageObject.author}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   render() {
     const run = `(function() {
@@ -185,9 +261,17 @@ export default class App extends Component {
           initTop = currTop;
         }, true)
     })(window)`;
+    
+    const {
+      scrollValue,
+      canGoBack,
+      canGoForward,
+      uri,
+      isError,
+      inputValue,
+      webViewKey,
+    } = this.state;
 
-    const { scrollValue, canGoBack, canGoForward, uri } = this.state;
-    console.log(uri)
     return (
       <>
         <StatusBar color="#000" animated={true} barStyle="dark-content" />
@@ -197,15 +281,16 @@ export default class App extends Component {
               // TDOD: animate this to conform with the statusbar/navbar animation
               marginTop: scrollValue < 0 ? NAVBAR_HEIGHT : STATUS_BAR_HEIGHT,
             }}
+            key={webViewKey}
             bounces={false}
             javaScriptEnabled={true}
             ref={b => (this._bridge = b)}
-            // source={{ html }}
-            source={uri ? { uri } : { html }}
+            source={ uri ? { uri } : { URL }}
             injectedJavaScript={run}
             onMessage={event => {
               this._onScroll(event.nativeEvent.data);
             }}
+            onError={this._handleError}
             ref={this.webview_ref}
             originWhitelist={['*']}
             onNavigationStateChange={this._onNavigationStateChange}
@@ -220,7 +305,7 @@ export default class App extends Component {
                 <TextInput
                   onFocus={this._showInput}
                   onChangeText={this._handleChange}
-                  value={this.state.inputValue}
+                  value={inputValue}
                   autoCorrect={false}
                   autoCapitalize="none"
                   returnKeyType="go"
@@ -237,6 +322,7 @@ export default class App extends Component {
               </View>
             </View>
           </Animated.View>
+          {!canGoBack && !isError ? this._renderArtistButton() : null}
           <Animated.View
             style={[
               styles.tabBar,
@@ -253,7 +339,9 @@ export default class App extends Component {
               {icons.map((icon, index) => {
                 icon = index == 1 && !canGoForward ? assets['next-off'] : icon;
                 const _icon =
-                  index == 0 && !canGoBack ? assets['back-off'] : icon;
+                  index == 0 && !canGoBack // && !didUrlChange
+                    ? assets['back-off']
+                    : icon;
                 return (
                   <TouchableOpacity
                     key={index}
@@ -299,7 +387,7 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
-    backgroundColor: '#f4f4f4',
+    backgroundColor: 'rgba(236, 236, 236, 0.90)',
   },
   navbar: {
     position: 'absolute',
@@ -307,7 +395,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    backgroundColor: '#ececec',
+    backgroundColor: 'rgba(224, 224, 224, 1.0)',
     borderBottomColor: '#dedede',
     borderBottomWidth: 1,
     height: NAVBAR_HEIGHT,
@@ -344,7 +432,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    backgroundColor: '#ececec',
+    backgroundColor: 'rgba(224, 224, 224, 1.0)', // change the to about 0.90 for translucent tabBar
     height: isX() ? 80 : 40,
     justifyContent: 'center',
     borderTopWidth: 0.5,
