@@ -1,0 +1,146 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 100px;
+  width: 100%;
+  color: #fff;
+  font-size: 30px;
+  align-self: center;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+.first-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 85%;
+}
+
+.second-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 95%;
+  margin-top: 100px;
+}
+
+.title {
+  font-size: 85px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.sub-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.desc {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 250px;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 26px;
+}
+
+.bookmarks {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 200px;
+  /* border: 5px solid #fff;
+  font-family: Verdana, Geneva, Tahoma, sans-serif; */
+}
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  width: 100%;
+  /* width:150px;
+  height:100px; */
+}
+
+.youtube-icon,
+.amazon-icon,
+.wikipedia-icon,
+.twitter-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 70%;
+  height: 140px;
+  color: #333;
+  border-radius: 10px;
+  background-color: #fff;
+  border: 5px solid #fff;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 10px;
+  -ms-border-radius: 10px;
+  -o-border-radius: 10px;
+}
+
+.youtube-icon {
+  background-image: url('./src/assets/youtube.png');
+}
+
+.amazon-icon {
+  background-image: url('./src/assets/amazon.png');
+}
+
+.wikipedia-icon {
+  background-image: url('./src/assets/wiki.png');
+}
+
+.twitter-icon {
+  background-image: url('./src/assets/twitter.png');
+}
+
+.icon-label {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  font-size: 28px;
+  margin-top: 10px;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+a {
+  color: #fff;
+  text-decoration: none !important;
+}
+
+a:active {
+  color: #fff;
+  text-decoration: none !important;
+}
+
+a:visited {
+  color: #fff;
+  text-decoration: none !important;
+}
+a:valid {
+  color: #fff;
+  text-decoration: none !important;
+}
+
+.ads-tracker {
+  color: rgb(251, 84, 43);
+}
+
+.upgrade {
+  color: rgba(160, 164, 234, 1.0);
+}
