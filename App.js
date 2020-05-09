@@ -17,7 +17,7 @@ import { WebView } from 'react-native-webview';
 
 import { assets, icons } from './src/assets';
 import { isX } from './src/utils/is-iphone-x';
-import { images } from './fixtures';
+import { images, URL } from './fixtures';
 
 const NAVBAR_HEIGHT = isX() ? 100 : 64;
 const STATUS_BAR_HEIGHT = Platform.select({
@@ -26,7 +26,6 @@ const STATUS_BAR_HEIGHT = Platform.select({
 });
 
 const TAB_HEIGHT = isX() ? 80 : 40;
-const URL = 'http://127.0.0.1:5500/index.html';
 
 export default class App extends Component {
   constructor(props) {
@@ -38,12 +37,13 @@ export default class App extends Component {
       scrollValue: -1,
       title: '',
       uri: '',
-      isError: false,
+      error: false,
       homeImageObject: {},
       webViewKey: 1,
       canGoBack: false,
       canGoForward: false,
     };
+    this._inputRef = React.createRef();
     this.webview_ref = React.createRef();
     this.tabHeight = new Animated.Value(0);
     this.navHeight = new Animated.Value(0);
@@ -111,6 +111,7 @@ export default class App extends Component {
         break;
       }
       case 'key-2': {
+        this._handleSearch();
         break;
       }
       case 'key-3': {
@@ -135,8 +136,7 @@ export default class App extends Component {
 
   _handleBackAction = () => {
     const { canGoBack } = this.state;
-    if (canGoBack)
-      return this.webview_ref.current.goBack();
+    if (canGoBack) return this.webview_ref.current.goBack();
     return false;
   };
 
@@ -195,7 +195,6 @@ export default class App extends Component {
           this.setState({
             uri: link,
           });
-          // this._onNavigationStateChange({canGoBack: true});
         }
       },
     );
@@ -203,9 +202,9 @@ export default class App extends Component {
 
   _handleError = error => {
     this.setState({
-      isError: true
+      error: true,
     });
-  }
+  };
 
   _renderArtistButton = props => {
     const { homeImageObject } = this.state;
@@ -247,6 +246,10 @@ export default class App extends Component {
     );
   };
 
+  _handleSearch = () => {
+    this._inputRef.current.focus();
+  }
+
   render() {
     const run = `(function() {
       var callback=function(direction) {
@@ -261,13 +264,13 @@ export default class App extends Component {
           initTop = currTop;
         }, true)
     })(window)`;
-    
+
     const {
       scrollValue,
       canGoBack,
       canGoForward,
       uri,
-      isError,
+      error,
       inputValue,
       webViewKey,
     } = this.state;
@@ -284,8 +287,7 @@ export default class App extends Component {
             key={webViewKey}
             bounces={false}
             javaScriptEnabled={true}
-            ref={b => (this._bridge = b)}
-            source={ uri ? { uri } : { URL }}
+            source={uri ? { uri } : { URL }}
             injectedJavaScript={run}
             onMessage={event => {
               this._onScroll(event.nativeEvent.data);
@@ -312,6 +314,7 @@ export default class App extends Component {
                   selectTextOnFocus={true}
                   onBlur={this._hideInput}
                   onSubmitEditing={this._handleGo}
+                  ref={this._inputRef}
                   // inputAccessoryViewID={'inputAccessoryViewID'}
                   style={{
                     fontSize: 15,
@@ -322,7 +325,7 @@ export default class App extends Component {
               </View>
             </View>
           </Animated.View>
-          {!canGoBack && !isError ? this._renderArtistButton() : null}
+          {!canGoBack && !error ? this._renderArtistButton() : null}
           <Animated.View
             style={[
               styles.tabBar,
@@ -336,18 +339,22 @@ export default class App extends Component {
                 alignItems: 'center',
                 width: '88%',
               }}>
-              {icons.map((icon, index) => {
+              {icons(canGoBack).map((icon, index) => {
                 icon = index == 1 && !canGoForward ? assets['next-off'] : icon;
                 const _icon =
-                  index == 0 && !canGoBack // && !didUrlChange
-                    ? assets['back-off']
-                    : icon;
+                  index == 0 && !canGoBack ? assets['back-off'] : icon;
                 return (
                   <TouchableOpacity
                     key={index}
                     onPress={() => this._handleAction('key-' + index)}
                     onLongPress={null}>
-                    <Image source={_icon || icon} style={styles.icons} />
+                    {index === 3 ? (
+                      <View style={styles.tabIcon}>
+                        <Text>{'3'}</Text>
+                      </View>
+                    ) : (
+                      <Image source={_icon || icon} style={[styles.icons]} />
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -438,5 +445,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: '#e4e4e4',
     paddingBottom: isX() ? 30 : 0,
+  },
+  tabIcon: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 22.5,
+    height: 22.5,
+    borderColor: '#000',
+    borderWidth: 1.65,
+    borderRadius: 3,
   },
 });
